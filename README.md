@@ -45,9 +45,12 @@ works exactly as it did before.
    changes). Two ways — pick whichever's easier:
 
    **Dashboard (no command line):** open the project → Storage tab → your
-   Blob store → there's an upload/file-browser view — upload
-   `private/british-finals-plan.pdf` from your computer. **Don't rename it**
-   — the code looks for it by the exact name `british-finals-plan.pdf`.
+   Blob store → there's an upload/file-browser view — upload the PDF from
+   your computer. The code looks for it by the exact name
+   `ThePlanThatGotMeToTheBritishFinals.pdf` (matching what's already
+   uploaded to the live store) — if you ever re-upload, keep that exact
+   filename, or update `PDF_PATHNAME` in `api/plan.js` and
+   `scripts/upload-pdf-to-blob.mjs` to match whatever you use instead.
    Since the store itself is private, anything uploaded into it is private
    automatically.
 
@@ -181,4 +184,4 @@ Tests use mock Mailchimp responses: capture-before-access, invalid email, honeyp
 
 ## Files and assets
 
-`public/` contains the page, styling, scripts and imagery. `server.mjs` provides capture and private downloads. `private/british-finals-plan.pdf` is the original guide. Artwork and logo come from the supplied PDF. Anton is bundled under the SIL Open Font License in `FONT-LICENSE.txt`; fonts are served locally.
+`public/` contains the page, styling, scripts and imagery. `server.mjs` provides capture and private downloads. `private/british-finals-plan.pdf` is the original guide (the live Blob store serves it under the name `ThePlanThatGotMeToTheBritishFinals.pdf` — see "Deploy to Vercel" above). Artwork and logo come from the supplied PDF. Anton is bundled under the SIL Open Font License in `FONT-LICENSE.txt`; fonts are served locally.
