@@ -7,7 +7,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { issueSignedToken, presignUrl } from '@vercel/blob';
 
-const PDF_PATHNAME = 'Leon-Charles-British-Finals-Plan.pdf';
+const PDF_PATHNAME = 'british-finals-plan.pdf';
 
 function validToken(value, secret) {
   if (secret.length < 32 || !value || value.length > 512) return false;

@@ -114,15 +114,15 @@ test('plan: valid token returns a presigned URL; invalid or missing token is rej
     },
     presignUrl: async (signed, opts) => {
       blobCalls.push(['presignUrl', opts]);
-      return { presignedUrl: 'https://store.private.blob.vercel-storage.com/Leon-Charles-British-Finals-Plan.pdf?sig=abc' };
+      return { presignedUrl: 'https://store.private.blob.vercel-storage.com/british-finals-plan.pdf?sig=abc' };
     },
   };
 
   let { req, res } = mockReqRes({ method: 'GET', query: { token } });
   await createPlanHandler(mockBlob, env)(req, res);
   assert.equal(res._status, 200);
-  assert.equal(res._body.url, 'https://store.private.blob.vercel-storage.com/Leon-Charles-British-Finals-Plan.pdf?sig=abc');
-  assert.equal(blobCalls[0][1].pathname, 'Leon-Charles-British-Finals-Plan.pdf');
+  assert.equal(res._body.url, 'https://store.private.blob.vercel-storage.com/british-finals-plan.pdf?sig=abc');
+  assert.equal(blobCalls[0][1].pathname, 'british-finals-plan.pdf');
   assert.equal(blobCalls[1][1].access, 'private');
 
   ({ req, res } = mockReqRes({ method: 'GET', query: { token: 'garbage' } }));

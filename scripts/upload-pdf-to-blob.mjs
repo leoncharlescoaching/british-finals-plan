@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const pdfPath = path.join(root, '..', 'private', 'british-finals-plan.pdf');
-const PDF_PATHNAME = 'Leon-Charles-British-Finals-Plan.pdf';
+const PDF_PATHNAME = 'british-finals-plan.pdf';
 
 if (!process.env.BLOB_READ_WRITE_TOKEN) {
   console.error('Set BLOB_READ_WRITE_TOKEN first — see the comment at the top of this script.');

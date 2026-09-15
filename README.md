@@ -42,16 +42,25 @@ works exactly as it did before.
    request's own `Host` header, so it works automatically on preview URLs
    and any custom domain without extra config.
 4. **Upload the PDF to Blob storage** (one-time, or whenever the PDF
-   changes): from your machine, with the Vercel CLI installed and logged in
+   changes). Two ways — pick whichever's easier:
+
+   **Dashboard (no command line):** open the project → Storage tab → your
+   Blob store → there's an upload/file-browser view — upload
+   `private/british-finals-plan.pdf` from your computer. **Don't rename it**
+   — the code looks for it by the exact name `british-finals-plan.pdf`.
+   Since the store itself is private, anything uploaded into it is private
+   automatically.
+
+   **CLI (if you're comfortable with a terminal):** from your machine, with
+   the Vercel CLI installed and logged in
    (`npm i -g vercel && vercel login && vercel link` inside this folder),
    grab a read-write token from the Blob store's ".env.local" tab in the
    dashboard, then run:
    ```sh
    BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxx node scripts/upload-pdf-to-blob.mjs
    ```
-   This uploads `private/british-finals-plan.pdf` as a **private** blob
-   named `Leon-Charles-British-Finals-Plan.pdf`. Re-run it (it overwrites)
-   whenever the PDF content changes.
+
+   Either way, re-upload (overwriting) whenever the PDF content changes.
 5. **Deploy** (push to the connected branch, or `vercel --prod`). Test by
    submitting your own email on the live URL and confirming the PDF
    downloads.
