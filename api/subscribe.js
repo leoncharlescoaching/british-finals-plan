@@ -34,7 +34,15 @@ async function provider(fetcher, url, body, method = 'POST', headers = {}) {
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(10000),
   });
-  if (!response.ok) throw new Error('Provider rejected request');
+  if (!response.ok) {
+    // Read the body for logging even on failure — Mailchimp's error responses
+    // (invalid key, invalid list id, etc.) are genuinely useful in the logs.
+    let detail = '';
+    try {
+      detail = await response.text();
+    } catch {}
+    throw new Error(`Mailchimp ${method} ${url.replace(/\/members\/[^/]+/, '/members/<redacted>')} -> ${response.status}: ${detail.slice(0, 500)}`);
+  }
   return response.json();
 }
 
@@ -115,7 +123,9 @@ export function createHandler(fetcher = fetch, env = process.env) {
     // transactional = non-subscribed contact. Omit status so existing consent is never overwritten.
     try {
       await provider(fetcher, memberUrl, { email_address: email, status_if_new: 'transactional' }, 'PUT', auth);
-    } catch {
+    } catch (err) {
+      // Logged server-side only (visible in Vercel's Runtime Logs) — never sent to the client.
+      console.error('[subscribe] Mailchimp member write failed:', err.message);
       res.status(502).json({ error: 'We couldn’t save your request. Please try again shortly.' });
       return;
     }
@@ -129,7 +139,9 @@ export function createHandler(fetcher = fetch, env = process.env) {
         'POST',
         auth,
       );
-    } catch {}
+    } catch (err) {
+      console.error('[subscribe] Mailchimp tag write failed (non-fatal):', err.message);
+    }
 
     res.status(200).json({ downloadPageUrl: '/download.html?token=' + issueToken(secret) });
   };

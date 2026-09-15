@@ -68,7 +68,9 @@ export function createHandler(blob = { issueSignedToken, presignUrl }, env = pro
         validUntil: Date.now() + 5 * 60 * 1000,
       });
       res.status(200).json({ url: presignedUrl });
-    } catch {
+    } catch (err) {
+      // Logged server-side only (visible in Vercel's Runtime Logs) — never sent to the client.
+      console.error('[plan] Blob presign failed:', err?.message || err);
       res.status(502).json({ error: 'We couldn’t prepare your download. Please try again shortly.' });
     }
   };
