@@ -65,6 +65,25 @@ traffic; if this ever gets hit by a coordinated bot run, add a proper
 distributed limiter (Vercel Firewall rules, or Upstash Redis) rather than
 relying on this alone.
 
+### A naming gotcha that already bit this project once
+
+Vercel's zero-config detection scans the project root for a conventionally
+named Node.js entrypoint (`app.js`, `index.js`, `server.js`, etc.) and, if it
+finds one, can build the **entire site** as a single Node.js function using
+that file — ignoring the static HTML and the `api/` folder. That happened
+here: the client-side script was originally named `app.js`, Vercel picked it
+up as "the root entrypoint," and every request (including just loading the
+homepage) got routed through browser-only code (`document.querySelector`,
+etc.) running in Node, which has no `document` — instant
+`FUNCTION_INVOCATION_FAILED` on every page load.
+
+Fixed by renaming the front-end script to `site.js` (referenced from
+`index.html`) and pinning `"framework": null` + `"outputDirectory": "."` in
+`vercel.json` so Vercel never guesses again. **Don't reintroduce a root-level
+file named `app.js`, `index.js`, or `server.js`** (that one's already taken
+by the self-hosted version, correctly excluded from the Vercel deploy via
+`.vercelignore`) — pick a different name if you add another front-end script.
+
 ### What's in `api/`
 
 - `api/subscribe.js` — `POST /api/subscribe`, same validation/Mailchimp
