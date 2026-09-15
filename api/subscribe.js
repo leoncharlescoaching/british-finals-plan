@@ -94,8 +94,13 @@ export function createHandler(fetcher = fetch, env = process.env) {
     input = input || {};
 
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+    const firstName = typeof input.first_name === 'string' ? input.first_name.trim() : '';
     if (input.website || email.length > 254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) {
       res.status(400).json({ error: 'Enter a valid email address.' });
+      return;
+    }
+    if (!firstName || firstName.length > 100) {
+      res.status(400).json({ error: 'Enter your first name.' });
       return;
     }
     if (limited(createHash('sha256').update(email).digest('hex'))) {
@@ -122,7 +127,13 @@ export function createHandler(fetcher = fetch, env = process.env) {
 
     // transactional = non-subscribed contact. Omit status so existing consent is never overwritten.
     try {
-      await provider(fetcher, memberUrl, { email_address: email, status_if_new: 'transactional' }, 'PUT', auth);
+      await provider(
+        fetcher,
+        memberUrl,
+        { email_address: email, status_if_new: 'transactional', merge_fields: { FNAME: firstName } },
+        'PUT',
+        auth,
+      );
     } catch (err) {
       // Logged server-side only (visible in Vercel's Runtime Logs) — never sent to the client.
       console.error('[subscribe] Mailchimp member write failed:', err.message);

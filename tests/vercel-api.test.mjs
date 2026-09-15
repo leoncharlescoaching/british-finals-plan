@@ -48,7 +48,7 @@ test('subscribe: happy path writes Mailchimp contact as transactional, tags it, 
   const { req, res } = mockReqRes({
     method: 'POST',
     headers: { host: 'plan.example.com', origin: 'https://plan.example.com', 'content-type': 'application/json' },
-    body: { email: 'LEON@Example.com' },
+    body: { first_name: 'Leon', email: 'LEON@Example.com' },
   });
   await handler(req, res);
   assert.equal(res._status, 200);
@@ -56,8 +56,20 @@ test('subscribe: happy path writes Mailchimp contact as transactional, tags it, 
   assert.equal(calls.length, 2);
   assert.equal(calls[0].body.email_address, 'leon@example.com');
   assert.equal(calls[0].body.status_if_new, 'transactional');
+  assert.equal(calls[0].body.merge_fields.FNAME, 'Leon');
   assert.equal('status' in calls[0].body, false);
   assert.equal(calls[1].url.endsWith('/tags'), true);
+});
+
+test('subscribe: rejects a missing first name', async () => {
+  const okFetcher = async () => ({ ok: true, json: async () => ({}) });
+  const { req, res } = mockReqRes({
+    method: 'POST',
+    headers: { host: 'plan.example.com', origin: 'https://plan.example.com', 'content-type': 'application/json' },
+    body: { email: 'a@example.com' },
+  });
+  await createSubscribeHandler(okFetcher, env)(req, res);
+  assert.equal(res._status, 400);
 });
 
 test('subscribe: rejects bad CSRF origin, invalid email, honeypot, and provider failure', async () => {
@@ -67,19 +79,19 @@ test('subscribe: rejects bad CSRF origin, invalid email, honeypot, and provider 
   };
   const baseHeaders = { host: 'plan.example.com', origin: 'https://plan.example.com', 'content-type': 'application/json' };
 
-  let { req, res } = mockReqRes({ method: 'POST', headers: { ...baseHeaders, origin: 'https://evil.example.com' }, body: { email: 'a@example.com' } });
+  let { req, res } = mockReqRes({ method: 'POST', headers: { ...baseHeaders, origin: 'https://evil.example.com' }, body: { first_name: 'A', email: 'a@example.com' } });
   await createSubscribeHandler(okFetcher, env)(req, res);
   assert.equal(res._status, 403);
 
-  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { email: 'not-an-email' } }));
+  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { first_name: 'A', email: 'not-an-email' } }));
   await createSubscribeHandler(okFetcher, env)(req, res);
   assert.equal(res._status, 400);
 
-  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { email: 'a@example.com', website: 'bot-filled-this' } }));
+  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { first_name: 'A', email: 'a@example.com', website: 'bot-filled-this' } }));
   await createSubscribeHandler(okFetcher, env)(req, res);
   assert.equal(res._status, 400);
 
-  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { email: 'a@example.com' } }));
+  ({ req, res } = mockReqRes({ method: 'POST', headers: baseHeaders, body: { first_name: 'A', email: 'a@example.com' } }));
   await createSubscribeHandler(failFetcher, env)(req, res);
   assert.equal(res._status, 502);
   assert.equal(res._body.downloadPageUrl, undefined);
@@ -90,7 +102,7 @@ test('subscribe: fails closed (503) when Mailchimp config is missing', async () 
   const { req, res } = mockReqRes({
     method: 'POST',
     headers: { host: 'plan.example.com', origin: 'https://plan.example.com', 'content-type': 'application/json' },
-    body: { email: 'a@example.com' },
+    body: { first_name: 'A', email: 'a@example.com' },
   });
   await createSubscribeHandler(async () => {
     throw new Error('should not be called');

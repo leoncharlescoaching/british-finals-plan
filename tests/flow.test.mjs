@@ -10,8 +10,8 @@ test('capture first, no implicit subscription, download page and protected PDF',
   assert.equal((await fetch(url+'/private/british-finals-plan.pdf')).status,404);
   assert.equal((await fetch(url+'/api/download')).status,403);
   assert.equal((await fetch(url+'/.env')).status,404);
-  const res=await post(url,{email:'LEON@example.com'});assert.equal(res.status,200);const data=await res.json();assert.equal(calls.length,2);assert.equal(data.emailQueued,undefined);
-  assert.equal(calls[0].body.status_if_new,'transactional');assert.equal('status' in calls[0].body,false);assert.equal(calls[0].body.email_address,'leon@example.com');
+  const res=await post(url,{first_name:'Leon',email:'LEON@example.com'});assert.equal(res.status,200);const data=await res.json();assert.equal(calls.length,2);assert.equal(data.emailQueued,undefined);
+  assert.equal(calls[0].body.status_if_new,'transactional');assert.equal('status' in calls[0].body,false);assert.equal(calls[0].body.email_address,'leon@example.com');assert.equal(calls[0].body.merge_fields.FNAME,'Leon');
   const page=await fetch(url+data.downloadPageUrl);assert.equal(page.status,200);assert.match(await page.text(),/Your plan is ready/);
   const download=await fetch(url+data.downloadPageUrl.replace('/download?','/api/download?'),{method:'HEAD'});assert.equal(download.status,200);assert.equal(download.headers.get('Content-Type'),'application/pdf');
   assert.equal((await fetch(url+data.downloadPageUrl.replace('/download?','/api/download?')+'tamper')).status,403);
@@ -19,10 +19,11 @@ test('capture first, no implicit subscription, download page and protected PDF',
 });
 test('invalid email, honeypot, provider failure and missing configuration fail closed',async()=>{
  await withServer(env,async()=>{throw Error('offline');},async url=>{
-  assert.equal((await post(url,{email:'bad'})).status,400);
-  assert.equal((await post(url,{email:'a@example.com',website:'bot'})).status,400);
-  const response=await post(url,{email:'a@example.com'});assert.equal(response.status,502);assert.equal((await response.json()).downloadPageUrl,undefined);
- });await withServer({},async()=>{throw Error('should not call');},async url=>{assert.equal((await post(url,{email:'a@example.com'})).status,503);});
+  assert.equal((await post(url,{first_name:'A',email:'bad'})).status,400);
+  assert.equal((await post(url,{first_name:'A',email:'a@example.com',website:'bot'})).status,400);
+  assert.equal((await post(url,{email:'a@example.com'})).status,400);
+  const response=await post(url,{first_name:'A',email:'a@example.com'});assert.equal(response.status,502);assert.equal((await response.json()).downloadPageUrl,undefined);
+ });await withServer({},async()=>{throw Error('should not call');},async url=>{assert.equal((await post(url,{first_name:'A',email:'a@example.com'})).status,503);});
 });
 test('download page without valid access returns to signup',async()=>{
  await withServer(env,async()=>{throw Error('not called');},async url=>{

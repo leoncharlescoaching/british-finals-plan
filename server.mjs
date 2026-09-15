@@ -56,7 +56,9 @@ export function createApp(env = process.env, fetcher = fetch) {
         let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>4096)return json(res,413,{error:'Request too large.'});}
         let input;try{input=JSON.parse(raw);}catch{return json(res,400,{error:'Invalid request.'});}
         const email=typeof input.email==='string'?input.email.trim().toLowerCase():'';
+        const firstName=typeof input.first_name==='string'?input.first_name.trim():'';
         if(input.website || email.length>254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))return json(res,400,{error:'Enter a valid email address.'});
+        if(!firstName || firstName.length>100)return json(res,400,{error:'Enter your first name.'});
         if(limited(createHash('sha256').update(email).digest('hex')))return json(res,429,{error:'Please wait 10 minutes before requesting again.'});
         if(secret.length<32 || !env.MAILCHIMP_API_KEY || !env.MAILCHIMP_AUDIENCE_ID || !/^us\d+$/.test(env.MAILCHIMP_SERVER_PREFIX||''))return json(res,503,{error:'The plan delivery service isn’t ready yet. Please try again later.'});
         const hash=createHash('md5').update(email).digest('hex');
@@ -64,7 +66,7 @@ export function createApp(env = process.env, fetcher = fetch) {
         const auth={Authorization:'Basic '+Buffer.from('lgf:'+env.MAILCHIMP_API_KEY).toString('base64')};
         // transactional = non-subscribed contact. Omit status so existing consent is never overwritten.
         try {
-          await provider(memberUrl,{email_address:email,status_if_new:'transactional'},'PUT',auth);
+          await provider(memberUrl,{email_address:email,status_if_new:'transactional',merge_fields:{FNAME:firstName}},'PUT',auth);
         } catch {return json(res,502,{error:'We couldn’t save your request. Please try again shortly.'});}
         // A tag is attribution, not marketing permission. Tag failure never loses the download.
         try {await provider(memberUrl+'/tags',{tags:[{name:'British Finals Lead Magnet – Bio',status:'active'}]},'POST',auth);}catch{}

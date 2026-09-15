@@ -10,7 +10,7 @@ form.addEventListener('submit', async (event) => {
   try {
     const response = await fetch('/api/subscribe', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email: form.email.value.trim(), website: form.website.value}),
+      body: JSON.stringify({first_name: form.first_name.value.trim(), email: form.email.value.trim(), website: form.website.value}),
       signal: AbortSignal.timeout(45000)
     });
     const data = await response.json();
@@ -24,7 +24,7 @@ form.addEventListener('submit', async (event) => {
     error.hidden = false;
   } finally {
     button.disabled = false;
-    button.innerHTML = 'GET THE PLAN <span aria-hidden="true">↗</span>';
+    button.textContent = 'GET THE PLAN';
   }
 });
 

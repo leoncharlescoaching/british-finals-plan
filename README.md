@@ -1,6 +1,6 @@
 # Look Good Fitness — British Finals plan
 
-Email-only form → contact saved in Mailchimp → protected download page → automatic PDF download, with a manual button as fallback. No guide emails or paid transactional add-on.
+First name + email form → contact saved in Mailchimp → protected download page → automatic PDF download, with a manual button as fallback. No guide emails or paid transactional add-on.
 
 ## Deploy to Vercel (the live path)
 
@@ -116,7 +116,7 @@ Configured and checked in Leon’s account:
 - Audience ID: `b895da0481`
 - Server prefix: `us5`
 - New source tag: **British Finals Lead Magnet – Bio** (created)
-- Only email is required; all six other audience fields are optional.
+- First name and email are both required and sent on capture (first name as the `FNAME` merge field — the default first-name merge tag Mailchimp creates for every audience; if yours uses a different tag, update it in `api/subscribe.js` and `server.mjs`). The other audience fields remain optional.
 - Existing sender: `leon@lookgoodfitness.co.uk`; marketing domain is authenticated.
 
 Still needed: a dedicated Mailchimp Marketing API key, saved only as a server secret. No credentials are included in this package. The existing ManyChat source tag is unchanged.
