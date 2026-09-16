@@ -56,9 +56,9 @@ export function createApp(env = process.env, fetcher = fetch) {
         let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>4096)return json(res,413,{error:'Request too large.'});}
         let input;try{input=JSON.parse(raw);}catch{return json(res,400,{error:'Invalid request.'});}
         const email=typeof input.email==='string'?input.email.trim().toLowerCase():'';
-        const firstName=typeof input.first_name==='string'?input.first_name.trim():'';
         if(input.website || email.length>254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))return json(res,400,{error:'Enter a valid email address.'});
-        if(!firstName || firstName.length>100)return json(res,400,{error:'Enter your first name.'});
+        const optedIn = input.marketingConsent === true;
+        if(optedIn && input.consentVersion !== '2026-09-16-v1')return json(res,400,{error:'Please refresh the page and confirm your email preference.'});
         if(limited(createHash('sha256').update(email).digest('hex')))return json(res,429,{error:'Please wait 10 minutes before requesting again.'});
         if(secret.length<32 || !env.MAILCHIMP_API_KEY || !env.MAILCHIMP_AUDIENCE_ID || !/^us\d+$/.test(env.MAILCHIMP_SERVER_PREFIX||''))return json(res,503,{error:'The plan delivery service isn’t ready yet. Please try again later.'});
         const hash=createHash('md5').update(email).digest('hex');
@@ -66,8 +66,20 @@ export function createApp(env = process.env, fetcher = fetch) {
         const auth={Authorization:'Basic '+Buffer.from('lgf:'+env.MAILCHIMP_API_KEY).toString('base64')};
         // transactional = non-subscribed contact. Omit status so existing consent is never overwritten.
         try {
-          await provider(memberUrl,{email_address:email,status_if_new:'transactional',merge_fields:{FNAME:firstName}},'PUT',auth);
+          await provider(memberUrl,{email_address:email,status_if_new:'transactional'},'PUT',auth);
         } catch {return json(res,502,{error:'We couldn’t save your request. Please try again shortly.'});}
+        if(optedIn) {
+          try {
+            // Persist evidence BEFORE changing marketing status. Never infer consent from the source tag.
+            await provider(memberUrl+'/notes',{note:JSON.stringify({
+              event:'email_marketing_opt_in',consent:true,version:'2026-09-16-v1',
+              recorded_at:new Date().toISOString(),source:base+'/',
+              wording:'Yes, email me training tips and coaching offers from Leon Charles / Look Good Fitness. I can unsubscribe anytime.'
+            })},'POST',auth);
+            const member = await provider(memberUrl,{status:'subscribed'},'PATCH',auth);
+            if(member.status !== 'subscribed')throw new Error('Subscription not confirmed');
+          } catch {return json(res,502,{error:'We couldn’t confirm your email subscription. Please try again, or untick the optional box to download without subscribing.'});}
+        }
         // A tag is attribution, not marketing permission. Tag failure never loses the download.
         try {await provider(memberUrl+'/tags',{tags:[{name:'British Finals Lead Magnet – Bio',status:'active'}]},'POST',auth);}catch{}
         return json(res,200,{downloadPageUrl:'/download?token='+token()});

@@ -10,8 +10,8 @@ form.addEventListener('submit', async (event) => {
   try {
     const response = await fetch('/api/subscribe', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({first_name: form.first_name.value.trim(), email: form.email.value.trim(), website: form.website.value}),
-      signal: AbortSignal.timeout(45000)
+      body: JSON.stringify({email: form.email.value.trim(), website: form.website.value, marketingConsent: form.marketingConsent.checked, consentVersion: "2026-09-16-v1"}),
+      signal: AbortSignal.timeout(60000)
     });
     const data = await response.json();
     if (!response.ok || !data.downloadPageUrl) throw new Error(data.error || 'We couldn’t get your plan. Please try again.');
@@ -24,7 +24,7 @@ form.addEventListener('submit', async (event) => {
     error.hidden = false;
   } finally {
     button.disabled = false;
-    button.textContent = 'GET THE PLAN';
+    button.innerHTML = 'GET THE PLAN <span aria-hidden="true">↗</span>';
   }
 });
 
