@@ -2,3 +2,5 @@
 .masthead>span{background:#101010b8;padding:8px 10px}
 
 .download-page{max-width:700px;margin:auto;padding:45px 6% 70px;text-align:center}.download-page h1{font-size:clamp(46px,8vw,80px)}.download-cover{display:block;width:180px;height:auto;margin:30px auto;border:1px solid #444}.download-page>p{color:#c4c4c4}.download-page>.eyebrow{color:#ed5148}.download-page .button{white-space:normal}
+
+.marketing-choice{display:flex;align-items:flex-start;gap:10px;margin:16px 0;color:#d0d0d0;font-size:14px;line-height:1.5;text-transform:none;letter-spacing:normal}.marketing-choice input{width:20px;height:20px;min-width:20px;margin:2px 0 0;padding:0;accent-color:#e6372e}.marketing-choice span{flex:1}
