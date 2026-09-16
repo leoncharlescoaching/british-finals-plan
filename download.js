@@ -16,7 +16,7 @@ async function prepareDownload() {
     if (url.protocol !== 'https:' || !url.hostname.endsWith('.blob.vercel-storage.com')) throw new Error('Unexpected destination');
     url.searchParams.set('download', '1');
 link.href = url.href;
-    link.target = '_self';
+    link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.hidden = false;
     status.textContent = 'Your download is starting…';
@@ -31,4 +31,6 @@ link.click();
 retry.addEventListener('click', prepareDownload);
 if (token) prepareDownload();
 else { status.textContent = 'Request your plan from the home page to get download access.'; }
+
+
 
