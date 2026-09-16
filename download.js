@@ -1,19 +1,29 @@
 const token = new URLSearchParams(location.search).get('token');
 const link = document.querySelector('#download-link');
 const status = document.querySelector('#download-status');
-if (token) {
-  fetch('/api/plan?token=' + encodeURIComponent(token), { signal: AbortSignal.timeout(15000) })
-    .then(async (response) => {
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.url) throw new Error('expired');
-      link.href = data.url;
-      link.hidden = false;
-      status.textContent = 'Your download should start automatically. Save your copy below.';
-      link.click();
-    })
-    .catch(() => {
-      location.replace('/?expired=1');
-    });
-} else {
-  status.textContent = 'Request your plan from the home page to get download access.';
+const retry = document.createElement('button');
+retry.type = 'button'; retry.textContent = 'TRY AGAIN'; retry.hidden = true;
+status.after(retry);
+async function prepareDownload() {
+  retry.hidden = true;
+  status.textContent = 'Preparing your plan…';
+  try {
+    const response = await fetch('/api/plan?token=' + encodeURIComponent(token), { signal: AbortSignal.timeout(15000) });
+    if (response.status === 403) { location.replace('/?expired=1'); return; }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.url) throw new Error('Download unavailable');
+    const url = new URL(data.url);
+    if (url.protocol !== 'https:' || !url.hostname.endsWith('.blob.vercel-storage.com')) throw new Error('Unexpected destination');
+    link.href = url.href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.hidden = false;
+    status.textContent = 'Your plan is ready. Tap DOWNLOAD THE PLAN below to save your copy.';
+  } catch {
+    status.textContent = 'We couldn’t prepare the PDF just now. Try again below—you don’t need to enter your details again.';
+    retry.hidden = false;
+  }
 }
+retry.addEventListener('click', prepareDownload);
+if (token) prepareDownload();
+else { status.textContent = 'Request your plan from the home page to get download access.'; }
