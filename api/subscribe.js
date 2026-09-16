@@ -108,6 +108,10 @@ export function createHandler(fetcher = fetch, env = process.env) {
       return;
     }
 
+    const optedIn = input.marketingConsent === true;
+    if (optedIn && input.consentVersion !== '2026-09-16-v1') {
+      res.status(400).json({error:'Please refresh the page and confirm your email preference.'}); return;
+    }
     const secret = env.DOWNLOAD_SECRET || '';
     if (
       secret.length < 32 ||
@@ -141,6 +145,15 @@ export function createHandler(fetcher = fetch, env = process.env) {
       return;
     }
 
+    if (optedIn) {
+      try {
+        await provider(fetcher, memberUrl + '/notes', {note: JSON.stringify({event:'email_marketing_opt_in',consent:true,version:'2026-09-16-v1',recorded_at:new Date().toISOString(),source:origin+'/',wording:'Yes, email me training tips and coaching offers from Leon Charles / Look Good Fitness. I can unsubscribe anytime.'})}, 'POST', auth);
+        const member = await provider(fetcher, memberUrl, {status:'subscribed'}, 'PATCH', auth);
+        if (member.status !== 'subscribed') throw new Error('Subscription not confirmed');
+      } catch {
+        res.status(502).json({error:'We couldn’t confirm your email subscription. Please try again, or untick the optional box to download without subscribing.'}); return;
+      }
+    }
     // A tag is attribution, not marketing permission. Tag failure never loses the download.
     try {
       await provider(
