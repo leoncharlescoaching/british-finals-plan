@@ -14,11 +14,15 @@ async function prepareDownload() {
     if (!response.ok || !data.url) throw new Error('Download unavailable');
     const url = new URL(data.url);
     if (url.protocol !== 'https:' || !url.hostname.endsWith('.blob.vercel-storage.com')) throw new Error('Unexpected destination');
-    link.href = url.href;
-    link.target = '_blank';
+    url.searchParams.set('download', '1');
+link.href = url.href;
+    link.target = '_self';
     link.rel = 'noopener noreferrer';
     link.hidden = false;
-    status.textContent = 'Your plan is ready. Tap DOWNLOAD THE PLAN below to save your copy.';
+    status.textContent = 'Your download is starting…';
+link.textContent = 'Click here if your download doesn’t start';
+document.querySelector('.download-note').textContent = 'Read the execution rules first. Then get to work.';
+link.click();
   } catch {
     status.textContent = 'We couldn’t prepare the PDF just now. Try again below—you don’t need to enter your details again.';
     retry.hidden = false;
@@ -27,3 +31,4 @@ async function prepareDownload() {
 retry.addEventListener('click', prepareDownload);
 if (token) prepareDownload();
 else { status.textContent = 'Request your plan from the home page to get download access.'; }
+
