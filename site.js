@@ -10,7 +10,7 @@ form.addEventListener('submit', async (event) => {
   try {
     const response = await fetch('/api/subscribe', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({first_name: form.first_name.value.trim(), email: form.email.value.trim(), website: form.website.value, marketingConsent: form.marketingConsent?.checked === true, consentVersion: "2026-09-16-v1"}),
+      body: JSON.stringify({first_name: form.first_name.value.trim(), email: form.email.value.trim(), website: form.website.value, marketingConsent: form.dataset.consentVersion === "2026-09-18-v2" || form.marketingConsent?.checked === true, consentVersion: form.dataset.consentVersion || "2026-09-16-v1"}),
       signal: AbortSignal.timeout(60000)
     });
     const data = await response.json();
