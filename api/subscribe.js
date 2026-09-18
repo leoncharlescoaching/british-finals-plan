@@ -109,7 +109,7 @@ export function createHandler(fetcher = fetch, env = process.env) {
     }
 
     const optedIn = input.marketingConsent === true;
-    if (optedIn && input.consentVersion !== '2026-09-16-v1') {
+    if (optedIn && !['2026-09-16-v1', '2026-09-18-v2'].includes(input.consentVersion)) {
       res.status(400).json({error:'Please refresh the page and confirm your email preference.'}); return;
     }
     const secret = env.DOWNLOAD_SECRET || '';
@@ -147,11 +147,11 @@ export function createHandler(fetcher = fetch, env = process.env) {
 
     if (optedIn) {
       try {
-        await provider(fetcher, memberUrl + '/notes', {note: JSON.stringify({event:'email_marketing_opt_in',consent:true,version:'2026-09-16-v1',recorded_at:new Date().toISOString(),source:origin+'/',wording:'Yes, email me training tips and coaching offers from Leon Charles / Look Good Fitness. I can unsubscribe anytime.'})}, 'POST', auth);
+        await provider(fetcher, memberUrl + '/notes', {note: JSON.stringify({event:'email_marketing_opt_in',consent:true,version:input.consentVersion,recorded_at:new Date().toISOString(),source:origin+'/',wording:input.consentVersion === '2026-09-18-v2' ? 'By signing up, you agree to receive training tips and coaching offers from Leon Charles / Look Good Fitness. Unsubscribe anytime.' : 'Yes, email me training tips and coaching offers from Leon Charles / Look Good Fitness. I can unsubscribe anytime.'})}, 'POST', auth);
         const member = await provider(fetcher, memberUrl, {status:'subscribed'}, 'PATCH', auth);
         if (member.status !== 'subscribed') throw new Error('Subscription not confirmed');
       } catch {
-        res.status(502).json({error:'We couldn’t confirm your email subscription. Please try again, or untick the optional box to download without subscribing.'}); return;
+        res.status(502).json({error:'We couldn’t confirm your email subscription. Please try again shortly.'}); return;
       }
     }
     // A tag is attribution, not marketing permission. Tag failure never loses the download.
